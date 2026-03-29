@@ -102,4 +102,4 @@
 - [x] 30 test, 3 dosya, hepsi geçti
 
 ### 10. Temizlik ve Dokümantasyon
-- [ ] README'ye current MVP scope bölümü ekle
+- [x] README'ye current MVP scope bölümü ekle
