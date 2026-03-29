@@ -1,0 +1,27 @@
+# Project TODO
+
+- [x] Veritabanı şeması: erpCategories, documents, matchingResults, matchingRules, emailSources, apiKeys, processingLogs tabloları
+- [x] Backend: LLM entegrasyonu ile anlamsal metin analizi ve prompt-tabanlı eşleştirme motoru
+- [x] Backend: Kategori CRUD işlemleri (gider kalemleri, operasyon tipleri, tedarikçi isimlendirmeleri)
+- [x] Backend: Belge yükleme, parse etme ve işleme pipeline'ı
+- [x] Backend: Eşleştirme kuralları motoru (exact, contains, regex, semantic stratejileri)
+- [x] Backend: ERP export API'si (JSON, CSV formatları)
+- [x] Backend: Dashboard istatistikleri ve güven skoru metrikleri
+- [x] Backend: E-posta içerik ayrıştırma (LLM ile parse)
+- [x] Backend: Belge saklama ve referanslama (S3 entegrasyonu)
+- [x] Frontend: Zarif ve elegant tema tasarımı (dark theme, premium renk paleti)
+- [x] Frontend: DashboardLayout ile sidebar navigasyon
+- [x] Frontend: Ana dashboard - özet istatistikler, son işlemler, güven skorları
+- [x] Frontend: Belge yükleme sayfası (serbest metin, e-posta ayrıştırma)
+- [x] Frontend: Eşleştirme sonuçları sayfası (güven skorları, onay, export)
+- [x] Frontend: Kategori yönetim paneli (gider kalemleri, operasyon tipleri, tedarikçiler)
+- [x] Frontend: Eşleştirme kuralları yönetimi
+- [x] Frontend: E-posta kaynakları yönetimi
+- [x] Frontend: API & Export sayfası
+- [x] Frontend: Veri kalitesi raporları dashboard'u
+- [x] Frontend: Ayarlar sayfası (profil, tema, güvenlik)
+- [x] Kullanıcı bazlı erişim kontrolü ve userId tabanlı veri izolasyonu
+- [x] Vitest testleri (25 test, 3 dosya, hepsi geçti)
+- [x] Öğrenme mekanizması: Onaylanan eşleştirmelerden otomatik kural oluşturma
+- [x] Veri kalitesi KPI'ları: Tamamlanma oranı, parse başarısızlık oranı, eşleşmeme oranı
+- [x] E-posta kaynakları yönetimi (IMAP otomatik izleme harici servis gerektirir, kaynak kayıt ve manuel parse mevcut)
