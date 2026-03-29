@@ -1,0 +1,10 @@
+Screenshot v2.1 observations:
+- AI slope badge (kırmızı nokta + LOJİSTİK VERİ STANDARDİZASYONU) kaldırıldı
+- Hero section temiz, direkt başlık ile başlıyor
+- Gradient arka plan kaldırıldı, düz beyaz
+- Blur efektleri kaldırıldı (hero image etrafındaki)
+- İkon kutuları artık düz kırmızı (bg-red-600) - daha kurumsal
+- Stats section artık kırmızı arka plan (bg-red-600) - dark gray yerine
+- Section başlıklarındaki "uppercase tracking-wide" kırmızı etiketler kaldırıldı
+- OAuth callback artık /dashboard'a yönlendiriyor
+- DashboardLayout login ekranı beyaz arka plan ile düzeltildi

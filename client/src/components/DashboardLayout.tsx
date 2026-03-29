@@ -84,19 +84,19 @@ export default function DashboardLayout({
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-                <Layers className="h-5 w-5 text-primary-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-red-600 flex items-center justify-center">
+                <Layers className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold tracking-tight">DDS Platform</span>
+              <span className="text-xl font-bold tracking-tight text-gray-900">DDS Platform</span>
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-center text-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight text-center text-gray-900">
               Giris Yapin
             </h1>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
+            <p className="text-sm text-gray-500 text-center max-w-sm">
               Karanlik Veri Standardizasyon Platformuna erisim icin giris yapmaniz gerekmektedir.
             </p>
           </div>
@@ -105,14 +105,14 @@ export default function DashboardLayout({
               window.location.href = getLoginUrl();
             }}
             size="lg"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all"
+            className="w-full bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all"
           >
             Giris Yap
           </Button>
           <Button
             variant="ghost"
             onClick={() => { window.location.href = "/"; }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-gray-500 hover:text-gray-900"
           >
             Ana Sayfaya Don
           </Button>

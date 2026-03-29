@@ -17,7 +17,6 @@ import {
   Package,
   Anchor,
 } from "lucide-react";
-import { useLocation } from "wouter";
 
 const IMAGES = {
   hero: "https://d2xsxph8kpxj0f.cloudfront.net/310519663462217950/AqZQyvQyj58b47RonXN6qp/warehouse-hero_25e6b0b3.jpeg",
@@ -26,13 +25,17 @@ const IMAGES = {
   supply: "https://d2xsxph8kpxj0f.cloudfront.net/310519663462217950/AqZQyvQyj58b47RonXN6qp/supply-chain_74976080.jpg",
 };
 
+function handleLogin() {
+  window.location.href = getLoginUrl();
+}
+
 function Navbar() {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
@@ -50,15 +53,15 @@ function Navbar() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { window.location.href = getLoginUrl(); }}
+              onClick={handleLogin}
               className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Giris Yap
             </Button>
             <Button
               size="sm"
-              onClick={() => { window.location.href = getLoginUrl(); }}
-              className="bg-red-600 hover:bg-red-700 text-white shadow-md"
+              onClick={handleLogin}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               Ucretsiz Baslat
             </Button>
@@ -71,15 +74,10 @@ function Navbar() {
 
 function HeroSection() {
   return (
-    <section className="relative pt-16 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-red-50/30" />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+    <section className="relative pt-16 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-100">
-              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-semibold text-red-700 tracking-wide uppercase">Lojistik Veri Standardizasyonu</span>
-            </div>
+          <div className="space-y-7">
             <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-gray-900 leading-tight tracking-tight">
               Tedarik Zincirinizin
               <span className="block text-red-600 mt-1">Karanlik Verisini</span>
@@ -91,7 +89,7 @@ function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 size="lg"
-                onClick={() => { window.location.href = getLoginUrl(); }}
+                onClick={handleLogin}
                 className="bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all text-base px-8 h-12"
               >
                 Hemen Baslayin
@@ -107,16 +105,6 @@ function HeroSection() {
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-6 pt-2">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-gray-600">LLM Destekli Analiz</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-gray-600">Otomatik ERP Eslestirme</span>
-              </div>
-            </div>
           </div>
           <div className="relative">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200">
@@ -125,36 +113,31 @@ function HeroSection() {
                 alt="Lojistik depo yonetimi"
                 className="w-full h-[400px] object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-black/20" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="h-8 w-8 rounded-lg bg-red-100 flex items-center justify-center">
-                      <Brain className="h-4 w-4 text-red-600" />
+                <div className="bg-white rounded-xl p-4 shadow-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center">
+                      <Brain className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-gray-900">Anlamsal Eslestirme</p>
-                      <p className="text-[11px] text-gray-500">Yapay zeka ile otomatik siniflandirma</p>
+                      <p className="text-sm font-semibold text-gray-900">Anlamsal Eslestirme</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1 bg-gray-50 rounded-lg p-2">
-                      <p className="text-[10px] text-gray-400 mb-0.5">Giris</p>
-                      <p className="text-xs font-medium text-gray-700">"Yurt ici nakliye bedeli"</p>
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1 bg-gray-100 rounded-lg p-2.5">
+                      <p className="text-[10px] text-gray-500 mb-0.5 font-medium">Giris</p>
+                      <p className="text-xs font-semibold text-gray-800">"Yurt ici nakliye bedeli"</p>
                     </div>
-                    <div className="flex items-center">
-                      <ArrowRight className="h-3 w-3 text-red-400" />
-                    </div>
-                    <div className="flex-1 bg-red-50 rounded-lg p-2">
-                      <p className="text-[10px] text-red-400 mb-0.5">ERP Ciktisi</p>
-                      <p className="text-xs font-medium text-red-700">Nakliye Giderleri</p>
+                    <ArrowRight className="h-4 w-4 text-red-500 shrink-0" />
+                    <div className="flex-1 bg-red-50 rounded-lg p-2.5 border border-red-100">
+                      <p className="text-[10px] text-red-500 mb-0.5 font-medium">ERP Ciktisi</p>
+                      <p className="text-xs font-semibold text-red-700">Nakliye Giderleri</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="absolute -top-4 -right-4 h-24 w-24 bg-red-100 rounded-full blur-3xl opacity-60" />
-            <div className="absolute -bottom-4 -left-4 h-32 w-32 bg-red-50 rounded-full blur-3xl opacity-60" />
           </div>
         </div>
       </div>
@@ -197,23 +180,22 @@ const features = [
 
 function FeaturesSection() {
   return (
-    <section id="features" className="py-20 lg:py-28 bg-white">
+    <section id="features" className="py-20 lg:py-28 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-sm font-semibold text-red-600 tracking-wide uppercase">Platform Ozellikleri</span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-3 tracking-tight">
-            Uctan Uca Veri Standardizasyonu
+        <div className="max-w-2xl mx-auto text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
+            Platform Ozellikleri
           </h2>
           <p className="text-gray-600 mt-4 text-lg leading-relaxed">
-            Tedarik zincirinizden gelen her turlu yapilandirilmamis veriyi, yapay zeka destekli motorumuz ile standart ERP formatina donusturun.
+            Tedarik zincirinizden gelen her turlu yapilandirilmamis veriyi standart ERP formatina donusturun.
           </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f, i) => (
-            <Card key={i} className="group border border-gray-100 shadow-sm hover:shadow-lg hover:border-red-100 transition-all duration-300 bg-white">
+            <Card key={i} className="group border border-gray-200 shadow-sm hover:shadow-lg hover:border-red-200 transition-all duration-300 bg-white">
               <CardContent className="p-6">
-                <div className="h-11 w-11 rounded-xl bg-red-50 flex items-center justify-center mb-4 group-hover:bg-red-100 transition-colors">
-                  <f.icon className="h-5 w-5 text-red-600" />
+                <div className="h-11 w-11 rounded-lg bg-red-600 flex items-center justify-center mb-4">
+                  <f.icon className="h-5 w-5 text-white" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-2">{f.title}</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">{f.desc}</p>
@@ -249,11 +231,10 @@ const steps = [
 
 function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-20 lg:py-28 bg-gray-50">
+    <section id="how-it-works" className="py-20 lg:py-28 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-sm font-semibold text-red-600 tracking-wide uppercase">Surecimiz</span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-3 tracking-tight">
+        <div className="max-w-2xl mx-auto text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
             Uc Adimda Veri Standardizasyonu
           </h2>
           <p className="text-gray-600 mt-4 text-lg">
@@ -264,7 +245,9 @@ function HowItWorksSection() {
           {steps.map((step, i) => (
             <div key={i} className={`grid lg:grid-cols-2 gap-10 items-center ${i % 2 === 1 ? "lg:grid-flow-dense" : ""}`}>
               <div className={`space-y-5 ${i % 2 === 1 ? "lg:col-start-2" : ""}`}>
-                <span className="text-5xl font-black text-red-100">{step.num}</span>
+                <div className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-red-600 text-white font-bold text-sm">
+                  {step.num}
+                </div>
                 <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
                 <p className="text-gray-600 leading-relaxed text-base">{step.desc}</p>
               </div>
@@ -306,11 +289,10 @@ const useCases = [
 
 function UseCasesSection() {
   return (
-    <section id="use-cases" className="py-20 lg:py-28 bg-white">
+    <section id="use-cases" className="py-20 lg:py-28 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-sm font-semibold text-red-600 tracking-wide uppercase">Kullanim Alanlari</span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mt-3 tracking-tight">
+        <div className="max-w-2xl mx-auto text-center mb-16">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
             Her Lojistik Surec Icin Cozum
           </h2>
           <p className="text-gray-600 mt-4 text-lg">
@@ -319,11 +301,11 @@ function UseCasesSection() {
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           {useCases.map((uc, i) => (
-            <Card key={i} className="border border-gray-100 shadow-sm hover:shadow-md transition-all bg-white">
+            <Card key={i} className="border border-gray-200 shadow-sm hover:shadow-md transition-all bg-white">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-                    <uc.icon className="h-6 w-6 text-red-600" />
+                  <div className="h-12 w-12 rounded-lg bg-red-600 flex items-center justify-center shrink-0">
+                    <uc.icon className="h-6 w-6 text-white" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3">{uc.title}</h3>
@@ -348,24 +330,24 @@ function UseCasesSection() {
 
 function StatsSection() {
   return (
-    <section className="py-16 bg-gray-900">
+    <section className="py-16 bg-red-600">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
           <div>
             <p className="text-3xl sm:text-4xl font-bold text-white">4</p>
-            <p className="text-sm text-gray-400 mt-1">Eslestirme Stratejisi</p>
+            <p className="text-sm text-red-100 mt-1">Eslestirme Stratejisi</p>
           </div>
           <div>
             <p className="text-3xl sm:text-4xl font-bold text-white">6</p>
-            <p className="text-sm text-gray-400 mt-1">ERP Kategori Tipi</p>
+            <p className="text-sm text-red-100 mt-1">ERP Kategori Tipi</p>
           </div>
           <div>
-            <p className="text-3xl sm:text-4xl font-bold text-red-400">LLM</p>
-            <p className="text-sm text-gray-400 mt-1">Yapay Zeka Destekli</p>
+            <p className="text-3xl sm:text-4xl font-bold text-white">LLM</p>
+            <p className="text-sm text-red-100 mt-1">Yapay Zeka Destekli</p>
           </div>
           <div>
             <p className="text-3xl sm:text-4xl font-bold text-white">API</p>
-            <p className="text-sm text-gray-400 mt-1">Entegrasyon Hazir</p>
+            <p className="text-sm text-red-100 mt-1">Entegrasyon Hazir</p>
           </div>
         </div>
       </div>
@@ -375,23 +357,19 @@ function StatsSection() {
 
 function CTASection() {
   return (
-    <section className="py-20 lg:py-28 bg-gradient-to-br from-red-600 to-red-700 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-72 h-72 bg-white rounded-full translate-x-1/3 translate-y-1/3" />
-      </div>
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <section className="py-20 lg:py-28 bg-gray-900">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
           Tedarik Zincirinizi Dijitallestirin
         </h2>
-        <p className="text-red-100 mt-4 text-lg max-w-xl mx-auto leading-relaxed">
-          Daginik lojistik verilerinizi standart formata donusturerek operasyonel verimliligizi artirin. Hemen ucretsiz hesap olusturun.
+        <p className="text-gray-400 mt-4 text-lg max-w-xl mx-auto leading-relaxed">
+          Daginik lojistik verilerinizi standart formata donusturerek operasyonel verimliligizi artirin.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="mt-8">
           <Button
             size="lg"
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            className="bg-white text-red-600 hover:bg-red-50 shadow-lg text-base px-8 h-12 font-semibold"
+            onClick={handleLogin}
+            className="bg-red-600 hover:bg-red-700 text-white shadow-lg text-base px-8 h-12 font-semibold"
           >
             Ucretsiz Hesap Olusturun
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -404,9 +382,9 @@ function CTASection() {
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 py-12 border-t border-gray-800">
+    <footer className="bg-gray-900 py-8 border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center">
               <Layers className="h-4 w-4 text-white" />
@@ -427,8 +405,8 @@ export default function Landing() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <HeroSection />
-      <FeaturesSection />
       <StatsSection />
+      <FeaturesSection />
       <HowItWorksSection />
       <UseCasesSection />
       <CTASection />

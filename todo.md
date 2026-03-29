@@ -33,3 +33,9 @@
 - [x] DashboardLayout sidebar güncelleme (yeni renk paleti, admin menü)
 - [x] Admin router: stats, users, updateRole (rol bazlı erişim kontrolü)
 - [x] Admin testleri: unauthenticated ve non-admin erişim reddi testleri
+
+## Düzeltmeler - v2.1
+
+- [x] AI slope tarzı badge'i kaldır (kırmızı nokta + "LOJİSTİK VERİ STANDARDİZASYONU" etiketi)
+- [x] Landing page'deki diğer AI slope görünümlü öğeleri temizle (gradient badge'ler, pulse animasyonlar vb.)
+- [x] Giriş Yap / Ücretsiz Başlat butonlarının siyah ekrana yönlendirme sorununu düzelt
