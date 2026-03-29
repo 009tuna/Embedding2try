@@ -142,3 +142,87 @@ describe("protected procedures", () => {
     await expect(caller.rules.list()).rejects.toThrow();
   });
 });
+
+describe("document processing - input validation", () => {
+  it("rejects document upload with empty title", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.documents.upload({ title: "", sourceType: "invoice", rawContent: "test content" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects document upload with empty rawContent", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.documents.upload({ title: "Test", sourceType: "invoice", rawContent: "" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("matching - input validation", () => {
+  it("rejects export with invalid format", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.matching.export({ format: "xml" as any })
+    ).rejects.toThrow();
+  });
+});
+
+describe("categories - input validation", () => {
+  it("rejects category creation with empty code", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.categories.create({ type: "expense", code: "", name: "Test", erpField: "test" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects category creation with invalid type", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.categories.create({ type: "invalid_type" as any, code: "TST-001", name: "Test" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("rules - input validation", () => {
+  it("rejects rule creation with empty sourcePattern", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.rules.create({
+        name: "Test Rule",
+        sourcePattern: "",
+        targetCategoryId: 1,
+        matchStrategy: "contains",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("rejects rule creation with invalid matchStrategy", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.rules.create({
+        name: "Test Rule",
+        sourcePattern: "nakliye",
+        targetCategoryId: 1,
+        matchStrategy: "fuzzy" as any,
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("apiKeysMgmt - input validation", () => {
+  it("rejects API key creation with empty name", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.apiKeysMgmt.create({ name: "" })
+    ).rejects.toThrow();
+  });
+});

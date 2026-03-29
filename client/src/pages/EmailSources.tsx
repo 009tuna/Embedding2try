@@ -78,7 +78,7 @@ export default function EmailSources() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">E-posta Kaynaklari</h1>
-          <p className="text-muted-foreground mt-1">Tedarikci ve nakliyeci e-posta adreslerini yonetin</p>
+          <p className="text-muted-foreground mt-1">Tedarikci, nakliyeci ve gumruk e-posta adreslerini kaydedin. Gelen belgeleri manuel olarak sisteme yukleyip isleme alin.</p>
         </div>
         <Dialog open={dialogOpen || !!editItem} onOpenChange={(v) => { if (!v) { setDialogOpen(false); setEditItem(null); resetForm(); } }}>
           <DialogTrigger asChild>
@@ -131,7 +131,7 @@ export default function EmailSources() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Mail className="h-12 w-12 text-muted-foreground/40 mb-4" />
             <h3 className="text-lg font-medium mb-1">Henuz e-posta kaynagi yok</h3>
-            <p className="text-sm text-muted-foreground mb-4">Tedarikci ve nakliyeci e-posta adreslerini ekleyin</p>
+            <p className="text-sm text-muted-foreground mb-4">Tedarikci ve nakliyeci e-posta adreslerini kaydedin, gelen belgeleri Belgeler sayfasindan yukleyin</p>
             <Button onClick={() => { resetForm(); setDialogOpen(true); }} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Kaynak Ekle

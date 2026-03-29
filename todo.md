@@ -39,3 +39,67 @@
 - [x] AI slope tarzı badge'i kaldır (kırmızı nokta + "LOJİSTİK VERİ STANDARDİZASYONU" etiketi)
 - [x] Landing page'deki diğer AI slope görünümlü öğeleri temizle (gradient badge'ler, pulse animasyonlar vb.)
 - [x] Giriş Yap / Ücretsiz Başlat butonlarının siyah ekrana yönlendirme sorununu düzelt
+
+## MVP Hardening - v3
+
+### 1. Core Flow Audit
+- [x] Tüm akışları kod üzerinden doğrula ve eksikleri listele (audit-findings.md)
+
+### 2. Gerçek Belge Yükleme
+- [x] Documents sayfasına gerçek file input ekle (txt/md/csv/pdf) - drag & drop + file picker
+- [x] Server-side dosya işleme (S3 upload + text extraction)
+- [x] PDF text extraction (server-side, pdf-parse v1)
+- [x] Desteklenmeyen format için açık hata mesajı
+- [x] rawContent server tarafında üretilsin
+
+### 3. Processing Pipeline
+- [x] Aynı belge tekrar işlenirse duplicate matching result oluşmasın (idempotent reprocessing)
+- [x] Reprocess desteği: eski sonuçları güvenli replace et (deleteMatchingResultsByDocument)
+- [x] Çift tıklama / yarış durumu koruması (status === "processing" guard)
+- [x] Document status geçişleri: pending -> processing -> completed/failed
+- [x] Hata detayları loglanıp okunabilir mesaj dönsün
+
+### 4. Matching Engine Kalitesi
+- [x] contains mantığında aşırı gevşek eşleşme düzelt (MIN_MATCH_LENGTH guard)
+- [x] Empty string match etmesin (guard at top of applyRules)
+- [x] Çok kısa term'ler için guard ekle (< MIN_MATCH_LENGTH)
+- [x] Rule match vs semantic match önceliği netleştir (rules first, then LLM)
+- [x] Düşük güven skorlarında net unmatched davranışı (< 0.3 threshold)
+- [x] Null match senaryoları düzgün işlensin (createUnmatchedResult helper)
+- [x] fieldType ile category.type uyumu (LLM prompt'ta belirtildi)
+
+### 5. Approval + Auto-Learning
+- [x] approve işleminde sonucu id ile doğrudan çek (getMatchingResultById)
+- [x] Auto-created rule duplicate kontrolü (existingRules.some check)
+- [x] Auto-learn failure approval'ı bloklamasın (try-catch wrapper)
+- [x] Approval sonrası UI anında güncellensin (invalidate calls)
+
+### 6. Export ve Dış Entegrasyon
+- [x] API key ile çalışan gerçek HTTP endpoint'ler (publicApi.ts)
+- [x] POST /api/v1/documents - belge yükleme
+- [x] POST /api/v1/documents/:id/process - belge işleme
+- [x] GET /api/v1/documents/:id/results - sonuçları getir
+- [x] POST /api/v1/standardize - tek adımda yükle + işle
+- [x] GET /api/v1/categories - kategori listesi
+- [x] API key hash doğrulaması (SHA-256)
+- [x] Inactive/invalid key yönetimi
+- [x] Audit logging (processing logs)
+- [x] API docs UI güncellendi (ApiExport.tsx - REST endpoint'ler, curl örnekleri)
+
+### 7. Email Source MVP
+- [x] Manual email source registry olarak konumlandır
+- [x] UI metnini buna göre düzelt (kaynak kayıt ve manuel parse)
+
+### 8. UI/UX Düzeltmeleri
+- [x] Documents: upload/process/status/error/reprocess net olsun (file upload tab, reprocess button)
+- [x] Matching: unmatched kayıtlar görünür olsun
+- [x] Approve sonrası state yenilensin (invalidate calls)
+- [x] Export butonları anlaşılır olsun (tabs ile REST API docs)
+
+### 9. Testler
+- [x] Empty string rule match etmez testi
+- [x] Repeated processing duplicate üretmez testi (idempotent reprocessing in code)
+- [x] 30 test, 3 dosya, hepsi geçti
+
+### 10. Temizlik ve Dokümantasyon
+- [ ] README'ye current MVP scope bölümü ekle

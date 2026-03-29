@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Key, Plus, Trash2, Loader2, Copy, Download, Code, FileJson } from "lucide-react";
+import { Key, Plus, Trash2, Loader2, Copy, Download, Code, FileJson, Zap, BookOpen } from "lucide-react";
 import { useState } from "react";
 
 export default function ApiExport() {
@@ -54,12 +55,14 @@ export default function ApiExport() {
     toast.success("Panoya kopyalandi");
   }
 
+  const baseUrl = window.location.origin;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">API & Export</h1>
-          <p className="text-muted-foreground mt-1">API anahtarlarini yonetin ve verileri disari aktarin</p>
+          <p className="text-muted-foreground mt-1">API anahtarlarini yonetin, verileri disari aktarin ve entegrasyon yapin</p>
         </div>
       </div>
 
@@ -74,48 +77,28 @@ export default function ApiExport() {
             <CardDescription>Eslestirme sonuclarini ERP sisteminize aktarin</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => exportMutation.mutate({ format: "json", approvedOnly: true })}
-              disabled={exportMutation.isPending}
-            >
+            <Button variant="outline" className="w-full justify-start" onClick={() => exportMutation.mutate({ format: "json", approvedOnly: true })} disabled={exportMutation.isPending}>
               <FileJson className="h-4 w-4 mr-3" />
               <div className="text-left">
                 <p className="text-sm font-medium">JSON Export (Onaylanmis)</p>
                 <p className="text-xs text-muted-foreground">Sadece onaylanmis eslestirmeleri aktar</p>
               </div>
             </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => exportMutation.mutate({ format: "csv", approvedOnly: true })}
-              disabled={exportMutation.isPending}
-            >
+            <Button variant="outline" className="w-full justify-start" onClick={() => exportMutation.mutate({ format: "csv", approvedOnly: true })} disabled={exportMutation.isPending}>
               <Download className="h-4 w-4 mr-3" />
               <div className="text-left">
                 <p className="text-sm font-medium">CSV Export (Onaylanmis)</p>
                 <p className="text-xs text-muted-foreground">Excel uyumlu CSV formati</p>
               </div>
             </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => exportMutation.mutate({ format: "json" })}
-              disabled={exportMutation.isPending}
-            >
+            <Button variant="outline" className="w-full justify-start" onClick={() => exportMutation.mutate({ format: "json" })} disabled={exportMutation.isPending}>
               <FileJson className="h-4 w-4 mr-3" />
               <div className="text-left">
                 <p className="text-sm font-medium">JSON Export (Tumu)</p>
                 <p className="text-xs text-muted-foreground">Tum eslestirme sonuclarini aktar</p>
               </div>
             </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => exportMutation.mutate({ format: "csv" })}
-              disabled={exportMutation.isPending}
-            >
+            <Button variant="outline" className="w-full justify-start" onClick={() => exportMutation.mutate({ format: "csv" })} disabled={exportMutation.isPending}>
               <Download className="h-4 w-4 mr-3" />
               <div className="text-left">
                 <p className="text-sm font-medium">CSV Export (Tumu)</p>
@@ -129,39 +112,67 @@ export default function ApiExport() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              API Dokumantasyonu
+              <BookOpen className="h-4 w-4" />
+              REST API Dokumantasyonu
             </CardTitle>
-            <CardDescription>ERP sisteminizle entegrasyon icin API bilgileri</CardDescription>
+            <CardDescription>Dis sistemler icin API key ile kimlik dogrulamali REST endpoint'leri</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg border p-3 bg-muted/30">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Endpoint</p>
-              <div className="flex items-center gap-2">
-                <code className="text-sm flex-1 break-all">POST /api/trpc/documents.upload</code>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard("/api/trpc/documents.upload")}>
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">Kimlik Dogrulama</p>
+              <code className="text-xs break-all">Authorization: Bearer dds_xxxxx...</code>
             </div>
-            <div className="rounded-lg border p-3 bg-muted/30">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Ornek Istek</p>
-              <pre className="text-xs overflow-x-auto">{`{
-  "title": "Fatura #1234",
-  "sourceType": "invoice",
-  "rawContent": "Nakliye bedeli: 5000 TL",
-  "supplierName": "ABC Lojistik"
-}`}</pre>
-            </div>
-            <div className="rounded-lg border p-3 bg-muted/30">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Desteklenen Islemler</p>
-              <ul className="text-xs space-y-1 text-muted-foreground">
-                <li>documents.upload - Belge yukleme</li>
-                <li>documents.process - Belge isleme</li>
-                <li>matching.export - Sonuc aktarimi</li>
-                <li>categories.list - Kategori listesi</li>
-              </ul>
-            </div>
+
+            <Tabs defaultValue="standardize" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 h-8">
+                <TabsTrigger value="standardize" className="text-xs"><Zap className="h-3 w-3 mr-1" />Tek Adim</TabsTrigger>
+                <TabsTrigger value="documents" className="text-xs"><Code className="h-3 w-3 mr-1" />Belgeler</TabsTrigger>
+                <TabsTrigger value="categories" className="text-xs"><FileJson className="h-3 w-3 mr-1" />Kategoriler</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="standardize" className="mt-3">
+                <div className="rounded-lg border p-3 bg-muted/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs font-mono">POST /api/v1/standardize</Badge>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(`${baseUrl}/api/v1/standardize`)}>
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Belge yukle + isle tek adimda. Sonuclari aninda dondurur.</p>
+                  <pre className="text-xs overflow-x-auto bg-background/50 p-2 rounded">{`curl -X POST ${baseUrl}/api/v1/standardize \\
+  -H "Authorization: Bearer dds_xxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "title": "Fatura #1234",
+    "sourceType": "invoice",
+    "rawContent": "Nakliye bedeli: 5000 TL\\nDemuraj: 800 USD",
+    "supplierName": "ABC Lojistik"
+  }'`}</pre>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="documents" className="mt-3 space-y-2">
+                <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
+                  <Badge variant="outline" className="text-xs font-mono">POST /api/v1/documents</Badge>
+                  <p className="text-xs text-muted-foreground">Belge yukle (islemeden)</p>
+                </div>
+                <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
+                  <Badge variant="outline" className="text-xs font-mono">POST /api/v1/documents/:id/process</Badge>
+                  <p className="text-xs text-muted-foreground">Belgeyi isle ve eslestirme sonuclarini al</p>
+                </div>
+                <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
+                  <Badge variant="outline" className="text-xs font-mono">GET /api/v1/documents/:id/results</Badge>
+                  <p className="text-xs text-muted-foreground">Belgenin eslestirme sonuclarini getir</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="categories" className="mt-3">
+                <div className="rounded-lg border p-3 bg-muted/30 space-y-1">
+                  <Badge variant="outline" className="text-xs font-mono">GET /api/v1/categories</Badge>
+                  <p className="text-xs text-muted-foreground">Tum ERP kategorilerini listele. ?type=expense ile filtrele.</p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

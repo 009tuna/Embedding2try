@@ -154,13 +154,12 @@ describe("applyRules - Edge cases", () => {
   });
 
   it("handles empty string term", () => {
-    // Empty string is contained in any pattern via 'contains' strategy, so it matches
-    // This is expected behavior - the applyRules function processes the term as-is
+    // Empty/whitespace terms are now guarded and return null immediately
     const result = applyRules("", mockRules, mockCategories);
-    // "contains" strategy: "".includes("nakliye bedeli") is false, but "nakliye bedeli".includes("") is true
-    // So it matches the highest priority active contains rule
-    expect(result).not.toBeNull();
-    expect(result!.matchType).toBe("rule");
+    expect(result).toBeNull();
+
+    const whitespaceResult = applyRules("   ", mockRules, mockCategories);
+    expect(whitespaceResult).toBeNull();
   });
 
   it("handles very long terms", () => {

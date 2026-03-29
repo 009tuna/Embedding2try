@@ -18,10 +18,15 @@ export interface MatchResult {
   llmExplanation: string | null;
 }
 
+/** Minimum character length for a term or pattern to be eligible for contains matching */
+const MIN_MATCH_LENGTH = 2;
+
 /**
  * Extract structured terms from raw logistics text using LLM
  */
 export async function extractTermsFromText(rawText: string): Promise<ExtractedTerm[]> {
+  if (!rawText || rawText.trim().length === 0) return [];
+
   const response = await invokeLLM({
     messages: [
       {
@@ -76,29 +81,48 @@ Lojistik terminolojisini, kısaltmaları ve farklı dillerdeki karşılıkları 
   
   try {
     const parsed = JSON.parse(content);
-    return parsed.terms || [];
+    // Filter out empty or whitespace-only terms
+    return (parsed.terms || []).filter((t: ExtractedTerm) => t.term && t.term.trim().length > 0);
   } catch {
     return [];
   }
 }
 
 /**
- * Apply user-defined matching rules first (exact, contains, regex)
+ * Apply user-defined matching rules first (exact, contains, regex).
+ * Guards:
+ * - Empty strings never match
+ * - Short terms/patterns (< MIN_MATCH_LENGTH) only match via exact strategy
+ * - Contains is one-directional: term must include pattern (not reverse)
+ * - Inactive rules are skipped
+ * - Invalid regex is caught and skipped
  */
 export function applyRules(term: string, rules: MatchingRule[], categories: ErpCategory[]): MatchResult | null {
+  // Guard: empty or whitespace-only terms never match
+  if (!term || term.trim().length === 0) return null;
+
   const sortedRules = [...rules].filter(r => r.isActive).sort((a, b) => b.priority - a.priority);
   
   for (const rule of sortedRules) {
     let matched = false;
-    const lowerTerm = term.toLowerCase();
-    const lowerPattern = rule.sourcePattern.toLowerCase();
+    const lowerTerm = term.toLowerCase().trim();
+    const lowerPattern = rule.sourcePattern.toLowerCase().trim();
+
+    // Guard: empty pattern never matches
+    if (!lowerPattern || lowerPattern.length === 0) continue;
 
     switch (rule.matchStrategy) {
       case "exact":
         matched = lowerTerm === lowerPattern;
         break;
       case "contains":
-        matched = lowerTerm.includes(lowerPattern) || lowerPattern.includes(lowerTerm);
+        // Guard: both term and pattern must meet minimum length for contains
+        if (lowerTerm.length < MIN_MATCH_LENGTH || lowerPattern.length < MIN_MATCH_LENGTH) {
+          matched = false;
+        } else {
+          // One-directional: term must include pattern (not reverse)
+          matched = lowerTerm.includes(lowerPattern);
+        }
         break;
       case "regex":
         try {
@@ -131,7 +155,9 @@ export function applyRules(term: string, rules: MatchingRule[], categories: ErpC
 }
 
 /**
- * Semantic matching using LLM - matches extracted terms to ERP categories
+ * Semantic matching using LLM - matches extracted terms to ERP categories.
+ * Rule matches take priority over semantic matches.
+ * Low confidence (< 0.3) results are treated as unmatched.
  */
 export async function semanticMatch(
   terms: ExtractedTerm[],
@@ -155,7 +181,16 @@ export async function semanticMatch(
 
   // Second pass: LLM semantic matching for unmatched terms
   if (unmatchedTerms.length > 0 && categories.length > 0) {
-    const categoryList = categories.map(c => ({
+    const activeCategories = categories.filter(c => c.isActive);
+    if (activeCategories.length === 0) {
+      // All categories inactive
+      for (const t of unmatchedTerms) {
+        results.push(createUnmatchedResult(t.term, "Aktif ERP kategorisi bulunamadı."));
+      }
+      return results;
+    }
+
+    const categoryList = activeCategories.map(c => ({
       id: c.id,
       code: c.code,
       name: c.name,
@@ -170,11 +205,12 @@ export async function semanticMatch(
       fieldType: t.fieldType,
     }));
 
-    const response = await invokeLLM({
-      messages: [
-        {
-          role: "system",
-          content: `Sen bir lojistik veri standardizasyon uzmanısın. Sana verilen terimleri, mevcut ERP kategorileriyle eşleştir.
+    try {
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `Sen bir lojistik veri standardizasyon uzmanısın. Sana verilen terimleri, mevcut ERP kategorileriyle eşleştir.
 
 Her terim için:
 1. En uygun ERP kategorisini bul
@@ -187,95 +223,146 @@ Lojistik terminolojisini, kısaltmaları, farklı dillerdeki karşılıkları ve
 "FOB Shanghai" bir rota/tedarik noktası olabilir.
 "Demuraj ücreti" bir gider kalemi olabilir.
 
-Eğer hiçbir kategori uygun değilse, categoryId olarak null ver ve güven skorunu düşük tut.`
-        },
-        {
-          role: "user",
-          content: JSON.stringify({ terms: termList, categories: categoryList })
-        }
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "matching_results",
-          strict: true,
-          schema: {
-            type: "object",
-            properties: {
-              matches: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    term: { type: "string" },
-                    categoryId: { type: ["integer", "null"] },
-                    categoryName: { type: ["string", "null"] },
-                    confidenceScore: { type: "number" },
-                    erpField: { type: ["string", "null"] },
-                    standardizedValue: { type: ["string", "null"] },
-                    explanation: { type: "string" }
-                  },
-                  required: ["term", "categoryId", "categoryName", "confidenceScore", "erpField", "standardizedValue", "explanation"],
-                  additionalProperties: false
+Eğer hiçbir kategori uygun değilse, categoryId olarak null ver ve güven skorunu 0.0 yap.
+Eğer terimin fieldType'ı ile kategorinin type'ı uyuşuyorsa bunu dikkate al ve güven skorunu artır.`
+          },
+          {
+            role: "user",
+            content: JSON.stringify({ terms: termList, categories: categoryList })
+          }
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "matching_results",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                matches: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      term: { type: "string" },
+                      categoryId: { type: ["integer", "null"] },
+                      categoryName: { type: ["string", "null"] },
+                      confidenceScore: { type: "number" },
+                      erpField: { type: ["string", "null"] },
+                      standardizedValue: { type: ["string", "null"] },
+                      explanation: { type: "string" }
+                    },
+                    required: ["term", "categoryId", "categoryName", "confidenceScore", "erpField", "standardizedValue", "explanation"],
+                    additionalProperties: false
+                  }
                 }
-              }
-            },
-            required: ["matches"],
-            additionalProperties: false
+              },
+              required: ["matches"],
+              additionalProperties: false
+            }
           }
         }
-      }
-    });
+      });
 
-    const content = response.choices[0]?.message?.content;
-    if (content && typeof content === "string") {
-      try {
+      const content = response.choices[0]?.message?.content;
+      if (content && typeof content === "string") {
         const parsed = JSON.parse(content);
         for (const match of (parsed.matches || [])) {
-          results.push({
-            extractedTerm: match.term,
-            matchedCategoryId: match.categoryId,
-            matchedCategoryName: match.categoryName,
-            confidenceScore: Math.min(1, Math.max(0, match.confidenceScore)),
-            matchType: "semantic",
-            erpField: match.erpField,
-            standardizedValue: match.standardizedValue,
-            llmExplanation: match.explanation,
-          });
+          const score = Math.min(1, Math.max(0, match.confidenceScore));
+          // Low confidence threshold: treat as unmatched
+          if (score < 0.3 || !match.categoryId) {
+            results.push({
+              extractedTerm: match.term,
+              matchedCategoryId: null,
+              matchedCategoryName: null,
+              confidenceScore: score,
+              matchType: "semantic",
+              erpField: null,
+              standardizedValue: match.standardizedValue || match.term,
+              llmExplanation: match.explanation || "Uygun kategori bulunamadı",
+            });
+          } else {
+            results.push({
+              extractedTerm: match.term,
+              matchedCategoryId: match.categoryId,
+              matchedCategoryName: match.categoryName || null,
+              confidenceScore: score,
+              matchType: "semantic",
+              erpField: match.erpField || null,
+              standardizedValue: match.standardizedValue || match.categoryName || match.term,
+              llmExplanation: match.explanation || "Anlamsal eşleştirme yapıldı",
+            });
+          }
         }
-      } catch (e) {
-        // If LLM response parsing fails, create unmatched results
+      } else {
+        // Empty LLM response
         for (const t of unmatchedTerms) {
-          results.push({
-            extractedTerm: t.term,
-            matchedCategoryId: null,
-            matchedCategoryName: null,
-            confidenceScore: 0,
-            matchType: "semantic",
-            erpField: null,
-            standardizedValue: null,
-            llmExplanation: "Eşleştirme sırasında hata oluştu",
-          });
+          results.push(createUnmatchedResult(t.term, "LLM yanıtı alınamadı"));
         }
+      }
+    } catch (e) {
+      // If LLM response parsing fails, create unmatched results
+      for (const t of unmatchedTerms) {
+        results.push(createUnmatchedResult(t.term, "Eşleştirme sırasında hata oluştu"));
       }
     }
   } else if (unmatchedTerms.length > 0) {
     // No categories defined yet
     for (const t of unmatchedTerms) {
-      results.push({
-        extractedTerm: t.term,
-        matchedCategoryId: null,
-        matchedCategoryName: null,
-        confidenceScore: 0,
-        matchType: "semantic",
-        erpField: null,
-        standardizedValue: null,
-        llmExplanation: "Henüz ERP kategorisi tanımlanmamış. Lütfen kategori ekleyin.",
-      });
+      results.push(createUnmatchedResult(t.term, "Henüz ERP kategorisi tanımlanmamış. Lütfen kategori ekleyin."));
     }
   }
 
   return results;
+}
+
+/** Helper to create a consistent unmatched result */
+function createUnmatchedResult(term: string, explanation: string): MatchResult {
+  return {
+    extractedTerm: term,
+    matchedCategoryId: null,
+    matchedCategoryName: null,
+    confidenceScore: 0,
+    matchType: "semantic",
+    erpField: null,
+    standardizedValue: term,
+    llmExplanation: explanation,
+  };
+}
+
+/**
+ * Extract text content from uploaded file buffer based on mime type.
+ * Supports: text/plain, text/csv, text/markdown, application/pdf
+ */
+export async function extractTextFromFile(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {
+  // Plain text, CSV, Markdown
+  if (mimeType.startsWith("text/") || mimeType === "application/csv") {
+    return buffer.toString("utf-8");
+  }
+
+  // PDF
+  if (mimeType === "application/pdf") {
+    try {
+      // pdf-parse v1 exports a function as default
+      const pdfParseModule = await import("pdf-parse");
+      const pdfParseFn = (pdfParseModule as any).default || pdfParseModule;
+      const result = await pdfParseFn(buffer);
+      if (!result.text || result.text.trim().length === 0) {
+        throw new Error("PDF dosyasından metin çıkarılamadı. Dosya taranmış görüntü içeriyor olabilir.");
+      }
+      return result.text;
+    } catch (e: any) {
+      if (e.message.includes("metin çıkarılamadı")) throw e;
+      throw new Error(`PDF işleme hatası: ${e.message}`);
+    }
+  }
+
+  // Unsupported
+  const supported = ["text/plain", "text/csv", "text/markdown", "application/pdf"];
+  throw new Error(
+    `Desteklenmeyen dosya formatı: ${mimeType}. Desteklenen formatlar: ${supported.join(", ")}. ` +
+    `Diğer formatlar için lütfen metin içeriğini kopyalayıp yapıştırın.`
+  );
 }
 
 /**
@@ -288,6 +375,16 @@ export async function parseEmailContent(emailBody: string): Promise<{
   extractedData: Record<string, string>;
   summary: string;
 }> {
+  if (!emailBody || emailBody.trim().length === 0) {
+    return {
+      sender: null,
+      subject: null,
+      documentType: "other",
+      extractedData: {},
+      summary: "Boş e-posta içeriği"
+    };
+  }
+
   const response = await invokeLLM({
     messages: [
       {

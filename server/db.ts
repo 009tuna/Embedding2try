@@ -141,6 +141,19 @@ export async function createMatchingResults(data: InsertMatchingResult[]) {
   await db.insert(matchingResults).values(data);
 }
 
+export async function getMatchingResultById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(matchingResults).where(and(eq(matchingResults.id, id), eq(matchingResults.userId, userId))).limit(1);
+  return result[0];
+}
+
+export async function deleteMatchingResultsByDocument(documentId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.delete(matchingResults).where(and(eq(matchingResults.documentId, documentId), eq(matchingResults.userId, userId)));
+}
+
 export async function getMatchingResultsByDocument(documentId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -240,6 +253,17 @@ export async function deleteApiKey(id: number, userId: number) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.delete(apiKeys).where(and(eq(apiKeys.id, id), eq(apiKeys.userId, userId)));
+}
+
+export async function getApiKeyByHash(keyHash: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(apiKeys).where(and(eq(apiKeys.keyHash, keyHash), eq(apiKeys.isActive, true))).limit(1);
+  if (result[0]) {
+    // Update lastUsedAt
+    await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, result[0].id));
+  }
+  return result[0];
 }
 
 // ─── Processing Logs ─────────────────────────────────────

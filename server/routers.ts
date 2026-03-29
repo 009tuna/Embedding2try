@@ -6,7 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
-import { extractTermsFromText, semanticMatch, parseEmailContent } from "./standardization";
+import { extractTermsFromText, semanticMatch, parseEmailContent, extractTextFromFile } from "./standardization";
 import { nanoid } from "nanoid";
 import { createHash } from "crypto";
 
@@ -98,6 +98,7 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         return db.getDocumentById(input.id, ctx.user.id);
       }),
+    // Text-based upload (paste content)
     upload: protectedProcedure
       .input(z.object({
         title: z.string().min(1),
@@ -120,7 +121,6 @@ export const appRouter = router({
           fileKey: null,
           mimeType: null,
         });
-
         await db.createProcessingLog({
           userId: ctx.user.id,
           documentId: doc.id,
@@ -128,22 +128,40 @@ export const appRouter = router({
           details: { title: input.title, sourceType: input.sourceType },
           status: "success",
         });
-
         return doc;
       }),
+    // File-based upload (with server-side text extraction)
     uploadFile: protectedProcedure
       .input(z.object({
         title: z.string().min(1),
         sourceType: z.enum(["email", "waybill", "invoice", "order_note", "customs", "price_quote", "other"]),
-        rawContent: z.string().min(1),
-        fileBase64: z.string(),
-        fileName: z.string(),
-        mimeType: z.string(),
+        fileBase64: z.string().min(1),
+        fileName: z.string().min(1),
+        mimeType: z.string().min(1),
         supplierName: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Upload file to S3
         const buffer = Buffer.from(input.fileBase64, "base64");
+
+        // Server-side text extraction
+        let rawContent: string;
+        try {
+          rawContent = await extractTextFromFile(buffer, input.mimeType, input.fileName);
+        } catch (e: any) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Dosya metin çıkarma hatası: ${e.message}`,
+          });
+        }
+
+        if (!rawContent || rawContent.trim().length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Dosyadan metin çıkarılamadı. Lütfen metin içeren bir dosya yükleyin.",
+          });
+        }
+
+        // Upload file to S3
         const fileKey = `documents/${ctx.user.id}/${nanoid()}-${input.fileName}`;
         const { url } = await storagePut(fileKey, buffer, input.mimeType);
 
@@ -151,7 +169,7 @@ export const appRouter = router({
           userId: ctx.user.id,
           title: input.title,
           sourceType: input.sourceType,
-          rawContent: input.rawContent,
+          rawContent,
           fileUrl: url,
           fileKey,
           fileName: input.fileName,
@@ -165,17 +183,34 @@ export const appRouter = router({
           userId: ctx.user.id,
           documentId: doc.id,
           action: "document_uploaded_with_file",
-          details: { title: input.title, fileName: input.fileName },
+          details: { title: input.title, fileName: input.fileName, extractedChars: rawContent.length },
           status: "success",
         });
 
         return doc;
       }),
+    // Process document: extract terms + semantic matching
+    // Idempotent: re-processing deletes old results first
     process: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const doc = await db.getDocumentById(input.id, ctx.user.id);
-        if (!doc) throw new Error("Belge bulunamadı");
+        if (!doc) throw new TRPCError({ code: "NOT_FOUND", message: "Belge bulunamadı" });
+
+        // Guard: prevent concurrent processing
+        if (doc.status === "processing") {
+          throw new TRPCError({ code: "CONFLICT", message: "Bu belge şu anda işleniyor. Lütfen bekleyin." });
+        }
+
+        // Guard: empty content
+        if (!doc.rawContent || doc.rawContent.trim().length === 0) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Belge içeriği boş. İşleme yapılamaz." });
+        }
+
+        // Idempotent: delete old matching results if reprocessing
+        if (doc.status === "completed" || doc.status === "failed") {
+          await db.deleteMatchingResultsByDocument(input.id, ctx.user.id);
+        }
 
         // Update status to processing
         await db.updateDocument(input.id, ctx.user.id, { status: "processing" });
@@ -183,6 +218,22 @@ export const appRouter = router({
         try {
           // Step 1: Extract terms from raw text
           const extractedTerms = await extractTermsFromText(doc.rawContent);
+
+          if (extractedTerms.length === 0) {
+            await db.updateDocument(input.id, ctx.user.id, {
+              status: "completed",
+              processedAt: new Date(),
+              metadata: { termsExtracted: 0, matchesFound: 0, note: "Metinden terim çıkarılamadı" },
+            });
+            await db.createProcessingLog({
+              userId: ctx.user.id,
+              documentId: input.id,
+              action: "document_processed",
+              details: { termsExtracted: 0, matchesFound: 0, note: "No terms extracted" },
+              status: "success",
+            });
+            return { success: true, termsExtracted: 0, matchesFound: 0 };
+          }
 
           // Step 2: Get user's categories and rules
           const categories = await db.getCategories(ctx.user.id);
@@ -235,20 +286,21 @@ export const appRouter = router({
             details: { error: error.message },
             status: "error",
           });
-          throw error;
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `İşleme hatası: ${error.message}` });
         }
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        // Also delete associated matching results
+        await db.deleteMatchingResultsByDocument(input.id, ctx.user.id);
         await db.deleteDocument(input.id, ctx.user.id);
         return { success: true };
       }),
     parseEmail: protectedProcedure
       .input(z.object({ emailContent: z.string().min(1) }))
       .mutation(async ({ ctx, input }) => {
-        const parsed = await parseEmailContent(input.emailContent);
-        return parsed;
+        return parseEmailContent(input.emailContent);
       }),
   }),
 
@@ -271,14 +323,17 @@ export const appRouter = router({
     approve: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        // Use direct lookup instead of scanning all results
+        const approved = await db.getMatchingResultById(input.id, ctx.user.id);
+        if (!approved) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Eşleştirme sonucu bulunamadı" });
+        }
+
         await db.approveMatchingResult(input.id, ctx.user.id);
 
         // ─── Auto-learning: create a rule from approved semantic matches ───
         try {
-          const results = await db.getMatchingResults(ctx.user.id, { limit: 1000 });
-          const approved = results.find((r: any) => r.id === input.id);
-          if (approved && approved.matchType === "semantic" && approved.matchedCategoryId && approved.confidenceScore >= 0.7) {
-            // Check if a similar rule already exists
+          if (approved.matchType === "semantic" && approved.matchedCategoryId && approved.confidenceScore >= 0.7) {
             const existingRules = await db.getMatchingRules(ctx.user.id);
             const alreadyExists = existingRules.some((r: any) =>
               r.sourcePattern.toLowerCase() === approved.extractedTerm.toLowerCase() &&
@@ -288,7 +343,7 @@ export const appRouter = router({
               await db.createMatchingRule({
                 userId: ctx.user.id,
                 name: `Otomatik: ${approved.extractedTerm.substring(0, 50)}`,
-                description: `Onaylanan eslestirmeden otomatik olusturuldu (guven: ${(approved.confidenceScore * 100).toFixed(0)}%)`,
+                description: `Onaylanan eslestirmeden otomatik olusturuldu (guven: ${(Number(approved.confidenceScore) * 100).toFixed(0)}%)`,
                 sourcePattern: approved.extractedTerm,
                 targetCategoryId: approved.matchedCategoryId,
                 matchStrategy: "contains",
@@ -303,7 +358,6 @@ export const appRouter = router({
             }
           }
         } catch (e) {
-          // Auto-learning failure should not block approval
           console.warn("[AutoLearn] Failed to create rule from approval:", e);
         }
 
