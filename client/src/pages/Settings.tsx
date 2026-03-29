@@ -9,7 +9,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import {
   Settings, User, Palette, Shield, Bell, LogOut,
 } from "lucide-react";
-import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 
 export default function SettingsPage() {

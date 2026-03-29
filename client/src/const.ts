@@ -15,3 +15,23 @@ export const getLoginUrl = () => {
 
   return url.toString();
 };
+
+/**
+ * Navigate to login URL, breaking out of iframe if needed.
+ * In Preview panel (iframe), window.location.href causes a black screen
+ * because the iframe blocks cross-origin OAuth navigation.
+ */
+export const openLogin = () => {
+  const url = getLoginUrl();
+  try {
+    // If we're inside an iframe, try to navigate the top-level window
+    if (window.top && window.top !== window) {
+      window.top.location.href = url;
+    } else {
+      window.location.href = url;
+    }
+  } catch {
+    // Cross-origin iframe restriction - open in new tab as fallback
+    window.open(url, "_blank");
+  }
+};

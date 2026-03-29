@@ -1,0 +1,11 @@
+Login Flow Test Results:
+1. Landing page "Giris Yap" button → redirects to manus.im/app-auth with correct params
+2. Manus OAuth login page loads correctly with Google, Facebook, Microsoft, Apple options
+3. The OAuth flow itself is working - the "black screen" the user sees is likely:
+   a. The Manus OAuth login page loading state (white/blank page before the form renders)
+   b. OR after login, the redirect back to /dashboard shows DashboardLayout's loading state
+   
+The login buttons are working correctly - they redirect to the Manus OAuth portal.
+The user needs to log in through Manus OAuth (Google, Facebook, etc.) - this is the expected behavior.
+
+After successful login, OAuth callback redirects to /dashboard.

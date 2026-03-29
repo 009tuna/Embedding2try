@@ -1,0 +1,19 @@
+ROOT CAUSE ANALYSIS - Black Screen on Login
+
+The user is viewing the app through the Manus Preview panel (an iframe).
+When they click "Giris Yap" or "Ucretsiz Baslat", the handleLogin() function does:
+  window.location.href = getLoginUrl()  
+
+This tries to navigate the iframe to manus.im/app-auth (OAuth page).
+But the Preview panel iframe likely blocks cross-origin navigation, resulting in a black/blank screen.
+
+SOLUTION:
+1. Change all login buttons to use window.open() or target="_top" to break out of the iframe
+2. For the DashboardLayout login screen, same fix needed
+3. The global redirect in main.tsx also needs the same treatment
+
+The fix: Use window.top.location.href instead of window.location.href for OAuth redirects,
+or use window.open() to open in a new tab.
+
+Best approach: window.open(getLoginUrl(), "_blank") for button clicks
+And for the global unauthorized redirect in main.tsx, use try/catch with window.top?.location.href

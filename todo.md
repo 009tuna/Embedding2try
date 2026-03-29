@@ -103,3 +103,7 @@
 
 ### 10. Temizlik ve Dokümantasyon
 - [x] README'ye current MVP scope bölümü ekle
+
+## Bug Fix - v3.1
+
+- [x] Giriş Yap ve Ücretsiz Başlat butonlarına tıklandığında siyah ekran sorunu düzelt (iframe-safe openLogin)

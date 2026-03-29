@@ -1,0 +1,10 @@
+Debug findings:
+1. Landing page loads fine - all buttons visible
+2. /dashboard loads with existing session (tunahan akpınar logged in as admin)
+3. The browser already has a session cookie from previous login
+4. The user says "siyah ekran" - this might be happening in the Preview panel within Manus UI
+5. Need to check: Is the user clicking from Preview panel? The Preview panel might have iframe restrictions that block OAuth redirects
+6. The issue could be that OAuth redirect to manus.im is blocked in an iframe context (Preview panel)
+
+Key insight: The user is likely using the Preview panel (iframe) which cannot redirect to external OAuth URLs.
+Solution: The login buttons should work when opened in a new tab/window, not within the Preview iframe.

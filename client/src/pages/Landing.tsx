@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getLoginUrl } from "@/const";
+import { openLogin } from "@/const";
 import {
   ArrowRight,
   FileText,
@@ -26,7 +26,7 @@ const IMAGES = {
 };
 
 function handleLogin() {
-  window.location.href = getLoginUrl();
+  openLogin();
 }
 
 function Navbar() {
