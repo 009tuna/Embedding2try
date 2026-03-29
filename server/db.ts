@@ -295,3 +295,39 @@ export async function getRecentActivity(userId: number, limit = 10) {
   if (!db) return [];
   return db.select().from(processingLogs).where(eq(processingLogs.userId, userId)).orderBy(desc(processingLogs.createdAt)).limit(limit);
 }
+
+
+// ─── Admin ──────────────────────────────────────────────
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserRole(id: number, role: "user" | "admin") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role }).where(eq(users.id, id));
+}
+
+export async function getAdminStats() {
+  const db = await getDb();
+  if (!db) return { totalUsers: 0, totalDocuments: 0, totalMatches: 0, totalCategories: 0 };
+  const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+  const [docCount] = await db.select({ count: sql<number>`count(*)` }).from(documents);
+  const [matchCount] = await db.select({ count: sql<number>`count(*)` }).from(matchingResults);
+  const [catCount] = await db.select({ count: sql<number>`count(*)` }).from(erpCategories);
+  return {
+    totalUsers: Number(userCount?.count ?? 0),
+    totalDocuments: Number(docCount?.count ?? 0),
+    totalMatches: Number(matchCount?.count ?? 0),
+    totalCategories: Number(catCount?.count ?? 0),
+  };
+}

@@ -85,6 +85,32 @@ describe("protected procedures - dataQuality", () => {
   });
 });
 
+describe("admin procedures", () => {
+  it("rejects unauthenticated access to admin.stats", async () => {
+    const ctx = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.admin.stats()).rejects.toThrow();
+  });
+
+  it("rejects non-admin access to admin.stats", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.admin.stats()).rejects.toThrow("Admin yetkisi gereklidir");
+  });
+
+  it("rejects unauthenticated access to admin.users", async () => {
+    const ctx = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.admin.users()).rejects.toThrow();
+  });
+
+  it("rejects non-admin access to admin.updateRole", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.admin.updateRole({ userId: 2, role: "admin" })).rejects.toThrow("Admin yetkisi gereklidir");
+  });
+});
+
 describe("protected procedures", () => {
   it("rejects unauthenticated access to dashboard.stats", async () => {
     const ctx = createUnauthContext();

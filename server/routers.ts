@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { storagePut } from "./storage";
@@ -527,6 +528,25 @@ export const appRouter = router({
       }).optional())
       .query(async ({ ctx, input }) => {
         return db.getProcessingLogs(ctx.user.id, input);
+      }),
+  }),
+
+  // ─── Admin ──────────────────────────────────────────────
+  admin: router({
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Admin yetkisi gereklidir" });
+      return db.getAdminStats();
+    }),
+    users: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Admin yetkisi gereklidir" });
+      return db.getAllUsers();
+    }),
+    updateRole: protectedProcedure
+      .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Admin yetkisi gereklidir" });
+        await db.updateUserRole(input.userId, input.role);
+        return { success: true };
       }),
   }),
 });

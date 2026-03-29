@@ -1,0 +1,7 @@
+Landing page v2 observations:
+- Corporate red-white theme is working correctly
+- Navbar: DDS Platform logo (red square with Layers icon), nav links, Giris Yap + Ucretsiz Baslat buttons
+- Hero section: Large heading with red accent text, warehouse image, semantic matching demo card overlay
+- Clean professional look, no AI/teal aesthetic
+- CTA buttons are red, consistent branding
+- Need to verify: all sections below fold, dashboard pages, admin panel
